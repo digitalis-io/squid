@@ -26,9 +26,7 @@ spec:
         - name: {{ .Values.image.imagePullSecrets }}
 {{- end }}
       initContainers:
-        # if there is a line in config map that starts with `cache_dir`
-        # run `squid -z` which will create the cache structure on the filesystem
-        - name: create-cache-dir
+        - name: init-squid
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:

@@ -15,9 +15,8 @@ hostname: localhost
 initContainersArgs:
   - |-
     set -e
-    chown -R squid.squid /var/cache/squid
-    chmod 770 /var/cache/squid
-    squid -z --foreground 2>&1
+    echo "Setting up custom configs"
+    exit 0
 
 service:
   type: ClusterIP
