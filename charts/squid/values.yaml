@@ -49,6 +49,12 @@ ingress:
   #      - chart-example.local
 
 config: |
+  acl localnet src 10.0.0.0/8	# RFC1918 possible internal network
+  acl localnet src 172.16.0.0/12	# RFC1918 possible internal network
+  acl localnet src 192.168.0.0/16	# RFC1918 possible internal network
+  acl localnet src fc00::/7       # RFC 4193 local private network range
+  acl localnet src fe80::/10      # RFC 4291 link-local (directly plugged) machines
+
   acl SSL_ports port 443
   acl Safe_ports port 80		# http
   acl Safe_ports port 21		# ftp
@@ -62,34 +68,30 @@ config: |
   acl Safe_ports port 777		# multiling http
   acl CONNECT method CONNECT
 
-  # Recommended minimum Access Permission configuration:
-  #
-  # Deny requests to certain unsafe ports
   http_access deny !Safe_ports
 
-  # Only allow cachemgr access from localhost
+  http_access deny CONNECT !SSL_ports
+
   http_access allow localhost manager
   http_access deny manager
 
-  # Squid normally listens to port 3128
-  http_port 3128
 
-  # Uncomment and adjust the following to add a disk cache directory.
-  #cache_dir ufs /var/cache/squid 100 16 256
+  http_access allow localnet
+  http_access allow localhost
 
-  # Leave coredumps in the first cache dir
-  coredump_dir /var/cache/squid
+  http_access deny all
 
-  #
-  # Add any of your own refresh_pattern entries above these.
-  #
+  http_port  3120 intercept
+  https_port 3129 intercept ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size=16MB cert=/etc/squid/ssl_cert/myCA.pem
+  http_port  3128 ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size=16MB cert=/etc/squid/ssl_cert/myCA.pem
+
+
+  coredump_dir /var/spool/squid
+
   refresh_pattern ^ftp:		1440	20%	10080
   refresh_pattern ^gopher:	1440	0%	1440
   refresh_pattern -i (/cgi-bin/|\?) 0	0%	0
   refresh_pattern .		0	20%	4320
-
-  # Do not display squid version
-  httpd_suppress_version_string on
 
 # Optionally specify a secret whose contents will be mounted into /etc/squid/config.
 # configSecret: config-example
